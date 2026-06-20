@@ -72,20 +72,23 @@ The `/events` page renders server-supplied JSON payloads. Each payload is serial
 
 The root layout keeps the home route on the default `AgentPay` title and applies the template `"%s — AgentPay"` to route-specific titles.
 
-- `Services`
-- `New service`
-- `Usage metering`
-- `Agents`
-- `Admin`
-- `Stats`
-- `Event log`
-- `Webhooks`
-- `API keys`
-- `Search`
-- `Service {serviceId}`
-- `Edit service {serviceId}`
-- `Top agents {serviceId}`
-- `Agent {agent}`
+| Route | Title |
+|-------|-------|
+| `/` | `AgentPay` |
+| `/services` | `Services` |
+| `/services/new` | `New service` |
+| `/usage` | `Usage metering` |
+| `/agents` | `Agents` |
+| `/admin` | `Admin` |
+| `/stats` | `Stats` |
+| `/events` | `Event log` |
+| `/webhooks` | `Webhooks` |
+| `/api-keys` | `API keys` |
+| `/search` | `Search` |
+| `/services/[serviceId]` | `Service {serviceId}` |
+| `/services/[serviceId]/edit` | `Edit service {serviceId}` |
+| `/services/[serviceId]/agents` | `Top agents {serviceId}` |
+| `/agents/[agent]` | `Agent {agent}` |
 
 ## Services list paging
 
