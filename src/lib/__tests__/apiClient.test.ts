@@ -413,4 +413,31 @@ describe("apiClient", () => {
     await jest.advanceTimersByTimeAsync(100);
     expect(fetchSignal?.aborted).toBe(false);
   });
+
+  it("rejects immediately when the caller signal is already aborted before the call", async () => {
+    const callerController = new AbortController();
+    const callerAbort = new Error("Already cancelled");
+    callerAbort.name = "AbortError";
+    callerController.abort(callerAbort);
+
+    mockFetch(
+      jest.fn(
+        (_url, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            const signal = init?.signal;
+            if (signal?.aborted) {
+              reject(signal.reason);
+            } else {
+              signal?.addEventListener("abort", () => reject(signal.reason), {
+                once: true,
+              });
+            }
+          }),
+      ),
+    );
+
+    await expect(
+      apiFetch("/api/v1/things", { signal: callerController.signal }),
+    ).rejects.toBe(callerAbort);
+  });
 });

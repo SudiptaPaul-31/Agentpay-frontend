@@ -45,14 +45,6 @@ function shouldUseTimeout(timeoutMs: number) {
   return Number.isFinite(timeoutMs) && timeoutMs > 0;
 }
 
-async function readJson(res: Response): Promise<unknown> {
-  try {
-    return await res.json();
-  } catch {
-    return undefined;
-  }
-}
-
 function createHttpError(
   status: number,
   statusText: string | undefined,

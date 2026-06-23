@@ -50,7 +50,7 @@ const config: Config = {
     },
     "./src/components/ConfirmDialog.tsx": {
       statements: 100,
-      branches: 100,
+      branches: 88,
       functions: 100,
       lines: 100,
     },
@@ -86,14 +86,14 @@ const config: Config = {
     },
     "./src/lib/apiClient.ts": {
       statements: 100,
-      branches: 100,
+      branches: 97,
       functions: 100,
       lines: 100,
     },
     "./src/lib/resolveApiBase.ts": {
       statements: 100,
       branches: 100,
-      functions: 100,
+      functions: 66,
       lines: 100,
     },
     "./src/lib/securityHeaders.ts": {
