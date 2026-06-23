@@ -365,6 +365,45 @@ describe("apiClient", () => {
     await expect(pending).rejects.toBe(callerAbort);
   });
 
+  it("handles a caller signal that is already aborted before apiFetch is called", async () => {
+    const callerController = new AbortController();
+    const abortReason = new Error("Already cancelled");
+    abortReason.name = "AbortError";
+    callerController.abort(abortReason);
+
+    mockFetch(
+      jest.fn((_url, init) => {
+        const signal = init?.signal as AbortSignal;
+        if (signal?.aborted) {
+          return Promise.reject(signal.reason);
+        }
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      })
+    );
+
+    await expect(apiFetch("/api/v1/things", { signal: callerController.signal })).rejects.toBe(abortReason);
+  });
+
+  it("does not set a timeout when timeoutMs is 0", async () => {
+    jest.useFakeTimers();
+
+    let fetchSignal: AbortSignal | undefined;
+    mockFetch(
+      jest.fn(async (_url, init) => {
+        fetchSignal = init?.signal as AbortSignal;
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      })
+    );
+
+    await expect(
+      apiFetch<{ ok: boolean }>("/api/v1/things", { timeoutMs: 0 })
+    ).resolves.toEqual({ ok: true });
+
+    expect(fetchSignal?.aborted).toBe(false);
+    await jest.advanceTimersByTimeAsync(10_000);
+    expect(fetchSignal?.aborted).toBe(false);
+  });
+
   it("still resolves normally before timeout and leaves the signal un-aborted", async () => {
     jest.useFakeTimers();
 
