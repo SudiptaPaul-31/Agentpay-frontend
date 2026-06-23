@@ -52,6 +52,12 @@ agentpay-frontend/
     └── ci.yml            # CI: build, test
 ```
 
+## Shared components
+
+See [docs/components.md](docs/components.md) for the shared component catalog,
+including prop tables, usage examples, and accessibility notes for the
+primitives in `src/components`.
+
 ## Environment variables
 
 | Variable | Visibility | Default | Purpose |
