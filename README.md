@@ -115,6 +115,7 @@ The root layout keeps the home route on the default `AgentPay` title and applies
 | Route | Title |
 |-------|-------|
 | `/` | `AgentPay` |
+| `/about` | `About AgentPay` |
 | `/services` | `Services` |
 | `/services/new` | `New service` |
 | `/usage` | `Usage metering` |
@@ -129,6 +130,8 @@ The root layout keeps the home route on the default `AgentPay` title and applies
 | `/services/[serviceId]/edit` | `Edit service {serviceId}` |
 | `/services/[serviceId]/agents` | `Top agents {serviceId}` |
 | `/agents/[agent]` | `Agent {agent}` |
+
+The `/about` page now exposes direct links to the dashboard surfaces described in its copy: `/services`, `/usage`, `/docs`, `/events`, `/webhooks`, `/api-keys`, and `/admin`.
 
 ## Services list paging
 
