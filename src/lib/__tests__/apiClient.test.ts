@@ -12,7 +12,7 @@ import { resolveApiBase } from "../resolveApiBase";
 type ApiClientModule = typeof import("../apiClient");
 
 async function loadApiClient(
-  env: { NEXT_PUBLIC_AGENTPAY_API_BASE?: string } = {}
+  env: { NEXT_PUBLIC_AGENTPAY_API_BASE?: string } = {},
 ): Promise<ApiClientModule> {
   jest.resetModules();
 
@@ -68,14 +68,16 @@ describe("apiClient", () => {
       expect(url).toBe("http://localhost:3001/api/v1/things");
       expect(init?.method).toBeUndefined();
       expect((init?.headers as Record<string, string>)["Content-Type"]).toBe(
-        "application/json"
+        "application/json",
       );
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     });
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    await expect(apiGet<{ ok: boolean }>("/api/v1/things")).resolves.toEqual({ ok: true });
+    await expect(apiGet<{ ok: boolean }>("/api/v1/things")).resolves.toEqual({
+      ok: true,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -89,7 +91,9 @@ describe("apiClient", () => {
     const { apiGet } = await loadApiClient({
       NEXT_PUBLIC_AGENTPAY_API_BASE: "https://api.example.com/v1/",
     });
-    await expect(apiGet<{ ok: boolean }>("/health")).resolves.toEqual({ ok: true });
+    await expect(apiGet<{ ok: boolean }>("/health")).resolves.toEqual({
+      ok: true,
+    });
   });
 
   it("sends POST bodies as JSON strings", async () => {
@@ -101,9 +105,9 @@ describe("apiClient", () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiPost } = await loadApiClient();
-    await expect(apiPost<{ created: boolean }>("/api/v1/things", { hello: "world" })).resolves.toEqual(
-      { created: true }
-    );
+    await expect(
+      apiPost<{ created: boolean }>("/api/v1/things", { hello: "world" }),
+    ).resolves.toEqual({ created: true });
   });
 
   it("sends PATCH bodies as JSON strings", async () => {
@@ -115,9 +119,9 @@ describe("apiClient", () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiPatch } = await loadApiClient();
-    await expect(apiPatch<{ updated: boolean }>("/api/v1/things/1", { enabled: true })).resolves.toEqual(
-      { updated: true }
-    );
+    await expect(
+      apiPatch<{ updated: boolean }>("/api/v1/things/1", { enabled: true }),
+    ).resolves.toEqual({ updated: true });
   });
 
   it("merges caller headers while allowing Content-Type overrides", async () => {
@@ -138,7 +142,7 @@ describe("apiClient", () => {
           Authorization: "Bearer token",
           "X-Request-Id": "req-123",
         },
-      })
+      }),
     ).resolves.toEqual({ ok: true });
   });
 
@@ -159,21 +163,23 @@ describe("apiClient", () => {
   });
 
   it("unwraps ApiError fields onto the thrown Error instance", async () => {
-    const fetchMock = jest.fn(async () =>
-      new Response(
-        JSON.stringify({
-          error: "invalid_request",
-          message: "boom",
-          requestId: "req-1",
-        }),
-        { status: 400, statusText: "Bad Request" }
-      )
+    const fetchMock = jest.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: "invalid_request",
+            message: "boom",
+            requestId: "req-1",
+          }),
+          { status: 400, statusText: "Bad Request" },
+        ),
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    const error = (await apiGet("/api/v1/things/1").catch((err) => err)) as Error &
-      Partial<ApiError>;
+    const error = (await apiGet("/api/v1/things/1").catch(
+      (err) => err,
+    )) as Error & Partial<ApiError>;
 
     expect(error).toBeInstanceOf(Error);
     expect(error).toMatchObject({
@@ -184,18 +190,23 @@ describe("apiClient", () => {
   });
 
   it("falls back cleanly when a non-OK response has no body", async () => {
-    const fetchMock = jest.fn(async () =>
-      new Response(null, { status: 500, statusText: "Internal Server Error" })
+    const fetchMock = jest.fn(
+      async () =>
+        new Response(null, {
+          status: 500,
+          statusText: "Internal Server Error",
+        }),
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    const error = (await apiGet("/api/v1/things/1").catch((err) => err)) as Error &
-      Partial<ApiError>;
+    const error = (await apiGet("/api/v1/things/1").catch(
+      (err) => err,
+    )) as Error & Partial<ApiError>;
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe("Internal Server Error");
-    expect(error.error).toBeUndefined();
+    expect(error.error).toBe("http_error");
     expect(error.requestId).toBeUndefined();
   });
 
@@ -225,7 +236,7 @@ describe("apiClient", () => {
 
     const { apiGet } = await loadApiClient();
     await expect(apiGet("/api/v1/things/1")).rejects.toThrow(
-      "Response body was not valid JSON"
+      "Response body was not valid JSON",
     );
   });
 
@@ -241,8 +252,9 @@ describe("apiClient", () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    const error = (await apiGet("/api/v1/things/1").catch((err) => err)) as Error &
-      Partial<ApiError>;
+    const error = (await apiGet("/api/v1/things/1").catch(
+      (err) => err,
+    )) as Error & Partial<ApiError>;
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe("Internal Server Error");
@@ -260,8 +272,9 @@ describe("apiClient", () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    const error = (await apiGet("/api/v1/things/1").catch((err) => err)) as Error &
-      Partial<ApiError>;
+    const error = (await apiGet("/api/v1/things/1").catch(
+      (err) => err,
+    )) as Error & Partial<ApiError>;
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe("Request failed");
@@ -279,8 +292,9 @@ describe("apiClient", () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const { apiGet } = await loadApiClient();
-    const error = (await apiGet("/api/v1/things/1").catch((err) => err)) as Error &
-      Partial<ApiError>;
+    const error = (await apiGet("/api/v1/things/1").catch(
+      (err) => err,
+    )) as Error & Partial<ApiError>;
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe("Request failed");
@@ -288,10 +302,12 @@ describe("apiClient", () => {
   });
 
   it("throws a generic ApiError when an error response is not JSON", async () => {
-    mockFetch(jest.fn(async () => new Response("Bad gateway", { status: 502 })));
+    mockFetch(
+      jest.fn(async () => new Response("Bad gateway", { status: 502 })),
+    );
 
     await expect(apiGet("/api/v1/x")).rejects.toMatchObject({
-      message: "Request failed with status 502",
+      message: "Request failed",
       error: "http_error",
     });
   });
@@ -304,13 +320,11 @@ describe("apiClient", () => {
         (_url, init) =>
           new Promise<Response>((_resolve, reject) => {
             const signal = init?.signal;
-            signal?.addEventListener(
-              "abort",
-              () => reject(signal.reason),
-              { once: true }
-            );
-          })
-      )
+            signal?.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      ),
     );
 
     const pending = apiFetch("/api/v1/slow", { timeoutMs: 50 });
@@ -334,13 +348,11 @@ describe("apiClient", () => {
         (_url, init) =>
           new Promise<Response>((_resolve, reject) => {
             const signal = init?.signal;
-            signal?.addEventListener(
-              "abort",
-              () => reject(signal.reason),
-              { once: true }
-            );
-          })
-      )
+            signal?.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      ),
     );
 
     const pending = apiFetch("/api/v1/slow");
@@ -364,13 +376,11 @@ describe("apiClient", () => {
         (_url, init) =>
           new Promise<Response>((_resolve, reject) => {
             const signal = init?.signal;
-            signal?.addEventListener(
-              "abort",
-              () => reject(signal.reason),
-              { once: true }
-            );
-          })
-      )
+            signal?.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      ),
     );
 
     const pending = apiFetch("/api/v1/slow", {
@@ -392,11 +402,11 @@ describe("apiClient", () => {
       jest.fn(async (_url, init) => {
         fetchSignal = init?.signal as AbortSignal;
         return new Response(JSON.stringify({ ok: true }), { status: 200 });
-      })
+      }),
     );
 
     await expect(
-      apiFetch<{ ok: boolean }>("/api/v1/things", { timeoutMs: 100 })
+      apiFetch<{ ok: boolean }>("/api/v1/things", { timeoutMs: 100 }),
     ).resolves.toEqual({ ok: true });
 
     expect(fetchSignal?.aborted).toBe(false);

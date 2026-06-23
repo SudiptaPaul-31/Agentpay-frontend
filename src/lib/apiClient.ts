@@ -53,13 +53,21 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
-function createHttpError(status: number, body: unknown) {
+function createHttpError(
+  status: number,
+  statusText: string | undefined,
+  body: unknown,
+) {
   const apiError =
     body && typeof body === "object" ? (body as Partial<ApiError>) : undefined;
+
   const message =
     typeof apiError?.message === "string" && apiError.message.length > 0
       ? apiError.message
-      : `Request failed with status ${status}`;
+      : typeof statusText === "string" && statusText.trim().length > 0
+        ? statusText
+        : "Request failed";
+
   const err = new Error(message);
 
   return Object.assign(err, apiError ?? {}, {
@@ -79,7 +87,7 @@ function createHttpError(status: number, body: unknown) {
  */
 export async function apiFetch<T>(
   path: string,
-  init: ApiFetchInit = {}
+  init: ApiFetchInit = {},
 ): Promise<T> {
   const { timeoutMs, signal: callerSignal, headers, ...restInit } = init;
   const effectiveTimeoutMs = timeoutMs ?? DEFAULT_API_TIMEOUT_MS;
@@ -114,9 +122,19 @@ export async function apiFetch<T>(
       },
     });
     if (res.status === 204) return undefined as T;
-    const body = (await readJson(res)) as T | ApiError | undefined;
+
+    let body: T | ApiError | undefined;
+    try {
+      body = (await readResponseBody(res)) as T | ApiError | undefined;
+    } catch {
+      if (!res.ok) {
+        throw createHttpError(res.status, res.statusText, undefined);
+      }
+      throw new Error("Response body was not valid JSON");
+    }
+
     if (!res.ok) {
-      throw createHttpError(res.status, body);
+      throw createHttpError(res.status, res.statusText, body);
     }
     return body as T;
   } catch (error) {
@@ -137,12 +155,13 @@ export const apiGet = <T>(path: string, init: ApiFetchInit = {}) =>
 export const apiPost = <T>(
   path: string,
   body: unknown,
-  init: ApiFetchInit = {}
+  init: ApiFetchInit = {},
 ) => apiFetch<T>(path, { ...init, method: "POST", body: JSON.stringify(body) });
 export const apiPatch = <T>(
   path: string,
   body: unknown,
-  init: ApiFetchInit = {}
-) => apiFetch<T>(path, { ...init, method: "PATCH", body: JSON.stringify(body) });
+  init: ApiFetchInit = {},
+) =>
+  apiFetch<T>(path, { ...init, method: "PATCH", body: JSON.stringify(body) });
 export const apiDelete = (path: string, init: ApiFetchInit = {}) =>
   apiFetch<void>(path, { ...init, method: "DELETE" });

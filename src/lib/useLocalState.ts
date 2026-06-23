@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * useState backed by window.localStorage. SSR-safe — initial state is
@@ -8,17 +8,20 @@ import { useState } from "react";
  */
 export function useLocalState<T>(
   key: string,
-  initial: T
+  initial: T,
 ): [T, (next: T) => void] {
-  const [value, setValue] = useState<T>(() => {
-    if (typeof window === "undefined") return initial;
+  const [value, setValue] = useState<T>(initial);
+
+  useEffect(() => {
     try {
       const raw = window.localStorage.getItem(key);
-      return raw !== null ? (JSON.parse(raw) as T) : initial;
+      if (raw !== null) {
+        setValue(JSON.parse(raw) as T);
+      }
     } catch {
-      return initial;
+      /* ignore */
     }
-  });
+  }, [key]);
 
   const write = (next: T) => {
     setValue(next);

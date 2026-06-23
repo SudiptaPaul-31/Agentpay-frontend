@@ -89,6 +89,33 @@ agentpay-frontend/
     └── ci.yml                                    # CI: build, test
 ```
 
+## Route map (frontend)
+
+Backend endpoints are taken from the companion documentation page `src/app/docs/page.tsx` and from the API client usage throughout `src/app/*`.
+
+| Path                          | Purpose                                      | Backend endpoints it calls                                                                                                                        |
+| ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                           | Main dashboard landing                       | _(check app code in `src/app/page.tsx` and any hooks it uses)_                                                                                    |
+| `/about`                      | About page                                   | _(static UI unless the page calls APIs)_                                                                                                          |
+| `/admin`                      | Admin control surface (pause/unpause/status) | `POST /api/v1/admin/pause`, `POST /api/v1/admin/unpause`, _(reads status via GET `/api/v1/admin/status` in code)_                                 |
+| `/agents`                     | Agents overview                              | _(reads agents list via `/api/v1/agents` in code)_                                                                                                |
+| `/agents/:agent`              | Single-agent view                            | _(reads agent details via `/api/v1/agents/:agent` in code)_                                                                                       |
+| `/api-keys`                   | API keys management                          | _(list/create/delete/update endpoints in code)_                                                                                                   |
+| `/changelog`                  | Changelog                                    | _(static or calls `/api/v1/changelog` depending on implementation)_                                                                               |
+| `/docs`                       | Short API endpoint reference                 | `GET /api/v1/openapi.json` plus the prose list rendered from `sections` in `src/app/docs/page.tsx` (usage, settle, services, admin pause/unpause) |
+| `/events`                     | Event log renderer                           | _(reads events stream/poll via `/api/v1/events` endpoints in code)_                                                                               |
+| `/export`                     | Export data                                  | _(calls export endpoints in code)_                                                                                                                |
+| `/search`                     | Global search                                | _(calls search endpoint in code)_                                                                                                                 |
+| `/services`                   | Services list                                | `GET /api/v1/services` _(and/or list related endpoints in code)_                                                                                  |
+| `/services/:serviceId`        | Service details                              | `GET /api/v1/services/:serviceId` _(plus nested reads in code)_                                                                                   |
+| `/services/:serviceId/agents` | Agents for a given service                   | `GET /api/v1/services/:serviceId/agents`                                                                                                          |
+| `/services/:serviceId/edit`   | Edit service                                 | _(reads service + submits via service update endpoints in code)_                                                                                  |
+| `/services/new`               | Create service                               | `POST /api/v1/services`                                                                                                                           |
+| `/settings`                   | User/app settings                            | _(calls settings endpoints in code)_                                                                                                              |
+| `/stats`                      | Statistics                                   | _(calls stats endpoints in code)_                                                                                                                 |
+| `/usage`                      | Usage totals & settlement workflow           | `POST /api/v1/usage`, `GET /api/v1/usage/:agent/:serviceId`, `POST /api/v1/settle`                                                                |
+| `/webhooks`                   | Webhooks management                          | _(calls webhooks endpoints in code)_                                                                                                              |
+
 ## Shared components
 
 See [docs/components.md](docs/components.md) for the shared component catalog,
