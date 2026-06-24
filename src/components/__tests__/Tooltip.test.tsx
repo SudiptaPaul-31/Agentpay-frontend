@@ -101,4 +101,142 @@ describe("Tooltip", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
+
+  describe("collision-aware positioning", () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+
+    beforeAll(() => {
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: 1024,
+      });
+    });
+
+    afterAll(() => {
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: originalInnerWidth,
+      });
+    });
+
+    afterEach(() => {
+      Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+    });
+
+    const mockMeasurements = (wrapperRect: Partial<DOMRect>, tooltipRect: Partial<DOMRect>) => {
+      Element.prototype.getBoundingClientRect = function () {
+        if (this.getAttribute("role") === "tooltip") {
+          return {
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            ...tooltipRect,
+          } as DOMRect;
+        }
+        if (this.className.includes("inline-flex")) {
+          return {
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            ...wrapperRect,
+          } as DOMRect;
+        }
+        return {
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: 0,
+          height: 0,
+          x: 0,
+          y: 0,
+        } as DOMRect;
+      };
+    };
+
+    it("uses default placement when there is sufficient space above", () => {
+      mockMeasurements(
+        { top: 100, left: 200, width: 50, height: 20 },
+        { width: 80, height: 30 }
+      );
+      renderTooltip();
+      const trigger = getTrigger();
+      fireEvent.focusIn(trigger);
+
+      const tip = screen.getByRole("tooltip");
+      expect(tip).toHaveStyle({
+        bottom: "100%",
+        top: "auto",
+        left: "-15px",
+        opacity: "1",
+      });
+    });
+
+    it("flips the tooltip below the trigger when space above is insufficient", () => {
+      mockMeasurements(
+        { top: 20, left: 200, width: 50, height: 20 },
+        { width: 80, height: 30 }
+      );
+      renderTooltip();
+      const trigger = getTrigger();
+      fireEvent.focusIn(trigger);
+
+      const tip = screen.getByRole("tooltip");
+      expect(tip).toHaveStyle({
+        bottom: "auto",
+        top: "100%",
+        left: "-15px",
+        opacity: "1",
+      });
+    });
+
+    it("clamps horizontal positioning to the left viewport boundary when overflowing left", () => {
+      mockMeasurements(
+        { top: 100, left: 10, width: 50, height: 20 },
+        { width: 80, height: 30 }
+      );
+      renderTooltip();
+      const trigger = getTrigger();
+      fireEvent.focusIn(trigger);
+
+      const tip = screen.getByRole("tooltip");
+      expect(tip).toHaveStyle({
+        bottom: "100%",
+        top: "auto",
+        left: "-2px",
+        opacity: "1",
+      });
+    });
+
+    it("clamps horizontal positioning to the right viewport boundary when overflowing right", () => {
+      mockMeasurements(
+        { top: 100, left: 980, width: 50, height: 20 },
+        { width: 80, height: 30 }
+      );
+      renderTooltip();
+      const trigger = getTrigger();
+      fireEvent.focusIn(trigger);
+
+      const tip = screen.getByRole("tooltip");
+      expect(tip).toHaveStyle({
+        bottom: "100%",
+        top: "auto",
+        left: "-44px",
+        opacity: "1",
+      });
+    });
+  });
 });

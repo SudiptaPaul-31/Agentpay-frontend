@@ -87,7 +87,8 @@ describe("AdminPage pause/unpause", () => {
   });
 
   it("disables the toggle while the request is in flight to prevent double-submit", async () => {
-    let pauseResolve: (() => void) | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let pauseResolve: any = () => {};
     const pausePromise = new Promise<void>((r) => {
       pauseResolve = r;
     });
