@@ -78,7 +78,7 @@ export async function apiFetch<T>(
   let timeoutError: ApiTimeoutError | undefined;
 
   const abortFromCaller = () => {
-    controller.abort(callerSignal?.reason);
+    controller.abort(callerSignal!.reason);
   };
 
   if (callerSignal?.aborted) {
