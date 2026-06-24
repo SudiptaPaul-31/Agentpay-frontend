@@ -34,25 +34,21 @@ function shouldUseTimeout(timeoutMs: number) {
   return Number.isFinite(timeoutMs) && timeoutMs > 0;
 }
 
-const JSON_PARSE_FAILED = Symbol("json_parse_failed");
-
-async function tryParseJson(res: Response): Promise<unknown | typeof JSON_PARSE_FAILED> {
-  try {
-    return await res.json();
-  } catch {
-    return JSON_PARSE_FAILED;
-  }
-}
-
-function createHttpError(status: number, statusText: string, body: unknown) {
+function createHttpError(
+  status: number,
+  statusText: string | undefined,
+  body: unknown,
+) {
   const apiError =
     body && typeof body === "object" ? (body as Partial<ApiError>) : undefined;
+
   const message =
     typeof apiError?.message === "string" && apiError.message.length > 0
       ? apiError.message
-      : statusText.length > 0
+      : typeof statusText === "string" && statusText.trim().length > 0
         ? statusText
         : "Request failed";
+
   const err = new Error(message);
 
   if (apiError) {
@@ -75,7 +71,7 @@ function createHttpError(status: number, statusText: string, body: unknown) {
  */
 export async function apiFetch<T>(
   path: string,
-  init: ApiFetchInit = {}
+  init: ApiFetchInit = {},
 ): Promise<T> {
   const { timeoutMs, signal: callerSignal, headers, ...restInit } = init;
   const effectiveTimeoutMs = timeoutMs ?? DEFAULT_API_TIMEOUT_MS;
@@ -112,17 +108,18 @@ export async function apiFetch<T>(
 
     if (res.status === 204) return undefined as T;
 
-    // Detect whether the response has a real body stream. null means the
-    // Response was explicitly constructed with no body; undefined means a test
-    // mock that does not implement the stream property.
-    const bodyStream = (res as { body?: ReadableStream | null }).body;
+    let body: T | ApiError | undefined;
+    try {
+      body = (await readResponseBody(res)) as T | ApiError | undefined;
+    } catch {
+      if (!res.ok) {
+        throw createHttpError(res.status, res.statusText, undefined);
+      }
+      throw new Error("Response body was not valid JSON");
+    }
 
-    let parsed: unknown | typeof JSON_PARSE_FAILED;
-    if (bodyStream === null) {
-      // Real empty body — skip parsing; treat like JSON_PARSE_FAILED below.
-      parsed = JSON_PARSE_FAILED;
-    } else {
-      parsed = await tryParseJson(res);
+    if (!res.ok) {
+      throw createHttpError(res.status, res.statusText, body);
     }
 
     if (parsed === JSON_PARSE_FAILED) {
@@ -179,27 +176,13 @@ export function apiGet<T>(path: string, init: ApiFetchInit = {}) {
 export function apiPost<T>(
   path: string,
   body: unknown,
-  init: ApiFetchInit = {}
-) {
-  return apiFetch<T>(path, {
-    ...init,
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export function apiPatch<T>(
+  init: ApiFetchInit = {},
+) => apiFetch<T>(path, { ...init, method: "POST", body: JSON.stringify(body) });
+export const apiPatch = <T>(
   path: string,
   body: unknown,
-  init: ApiFetchInit = {}
-) {
-  return apiFetch<T>(path, {
-    ...init,
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
-}
-
-export function apiDelete(path: string, init: ApiFetchInit = {}) {
-  return apiFetch<void>(path, { ...init, method: "DELETE" });
-}
+  init: ApiFetchInit = {},
+) =>
+  apiFetch<T>(path, { ...init, method: "PATCH", body: JSON.stringify(body) });
+export const apiDelete = (path: string, init: ApiFetchInit = {}) =>
+  apiFetch<void>(path, { ...init, method: "DELETE" });

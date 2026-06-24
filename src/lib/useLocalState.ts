@@ -4,26 +4,20 @@ import { useEffect, useState } from "react";
 
 export function useLocalState<T>(
   key: string,
-  initial: T
+  initial: T,
 ): [T, (next: T) => void] {
   const [value, setValue] = useState<T>(initial);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        const raw = window.localStorage.getItem(key);
-        if (raw !== null) {
-          setValue(JSON.parse(raw) as T);
-        }
-      } catch {
-        setValue(initial);
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw !== null) {
+        setValue(JSON.parse(raw) as T);
       }
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [initial, key]);
+    } catch {
+      /* ignore */
+    }
+  }, [key]);
 
   const write = (next: T) => {
     setValue(next);

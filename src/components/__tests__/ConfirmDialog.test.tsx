@@ -155,4 +155,39 @@ describe("ConfirmDialog", () => {
     fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
     expect(confirmButton).toHaveFocus();
   });
+
+  it("focuses the dialog container when Tab is pressed with zero focusable elements", () => {
+    render(
+      <ConfirmDialog
+        open
+        title="Empty dialog"
+        onConfirm={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+
+    const dialog = screen.getByRole("dialog", { name: /empty dialog/i });
+    // Disable all buttons so getFocusableElements returns []
+    const buttons = dialog.querySelectorAll("button");
+    buttons.forEach((btn) => btn.setAttribute("disabled", ""));
+
+    dialog.focus();
+    fireEvent.keyDown(dialog, { key: "Tab" });
+    expect(dialog).toHaveFocus();
+  });
+
+  it("moves focus to the first element when Tab is pressed from outside the dialog", () => {
+    render(<ConfirmDialogHarness />);
+
+    const { dialog, cancelButton } = openDialog();
+
+    // Simulate focus moving outside the dialog (e.g. another element grabbed focus)
+    const outsideBtn = screen.getByRole("button", { name: /outside action/i });
+    outsideBtn.focus();
+    expect(outsideBtn).toHaveFocus();
+
+    // Tab key on the dialog while focus is outside should redirect to first focusable
+    fireEvent.keyDown(dialog, { key: "Tab" });
+    expect(cancelButton).toHaveFocus();
+  });
 });
