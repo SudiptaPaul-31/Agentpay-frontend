@@ -115,8 +115,8 @@ export function Tooltip({ label, children }: Props) {
           ref={tooltipRef}
           style={{
             left: `${coords.left}px`,
-            bottom: coords.isFlipped ? "auto" : "100%",
-            top: coords.isFlipped ? "100%" : "auto",
+            bottom: coords.isFlipped ? undefined : "100%",
+            top: coords.isFlipped ? "100%" : undefined,
             opacity: coords.ready ? 1 : 0,
           }}
           className={`absolute ${coords.isFlipped ? "pt-1" : "pb-1"}`}

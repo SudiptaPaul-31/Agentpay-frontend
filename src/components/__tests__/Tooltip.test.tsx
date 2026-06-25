@@ -178,12 +178,9 @@ describe("Tooltip", () => {
 
       await waitFor(() => {
         const tip = screen.getByRole("tooltip");
-        expect(tip).toHaveStyle({
-          bottom: "100%",
-          top: "auto",
-          left: "-15px",
-          opacity: "1",
-        });
+        // Default (above) placement: bottom is 100%, top is absent (undefined).
+        expect(tip).toHaveStyle({ bottom: "100%", left: "-15px", opacity: "1" });
+        expect(tip).not.toHaveStyle({ top: "100%" });
       });
     });
 
@@ -198,12 +195,10 @@ describe("Tooltip", () => {
 
       await waitFor(() => {
         const tip = screen.getByRole("tooltip");
-        expect(tip).toHaveStyle({
-          bottom: "auto",
-          top: "100%",
-          left: "-15px",
-          opacity: "1",
-        });
+        // When flipped, top is 100% and bottom is absent from the style attribute
+        // (React omits undefined style properties entirely).
+        expect(tip).toHaveStyle({ top: "100%", left: "-15px", opacity: "1" });
+        expect(tip).not.toHaveStyle({ bottom: "100%" });
       });
     });
 

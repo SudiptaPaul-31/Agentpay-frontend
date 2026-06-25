@@ -1,5 +1,9 @@
 jest.mock("../resolveApiBase", () => ({
-  resolveApiBase: jest.fn(() => "http://localhost:3001"),
+  resolveApiBase: jest.fn(() => {
+    const raw = process.env.NEXT_PUBLIC_AGENTPAY_API_BASE?.trim();
+    const base = raw && raw.length > 0 ? raw : "http://localhost:3001";
+    return base.replace(/\/+$/, "");
+  }),
 }));
 
 import {
