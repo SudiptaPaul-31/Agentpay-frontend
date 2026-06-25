@@ -48,6 +48,7 @@ agentpay-frontend/
 │   │   ├── layout.tsx
 │   │   ├── loading.tsx
 │   │   ├── error.tsx
+│   │   ├── global-error.tsx                        # root-layout crash boundary
 │   │   ├── not-found.tsx
 │   │   ├── favicon.ico
 │   │   ├── globals.css
@@ -127,6 +128,34 @@ primitives in `src/components`.
 See [docs/hooks.md](docs/hooks.md) for the shared hook reference, including
 signatures, return shapes, cancellation and SSR notes, and usage examples for
 the hooks in `src/lib`.
+
+## Error boundaries
+
+### Route-level boundary (`src/app/error.tsx`)
+
+Catches exceptions thrown inside individual route segments. Renders inside the
+root layout so the Header, Footer, and ToastProvider remain visible. Shows the
+error message and a "Try again" button that calls Next.js's `reset()`.
+
+### Global boundary (`src/app/global-error.tsx`)
+
+Catches exceptions thrown **in the root layout itself** — for example a crash
+in `Header`, `Footer`, or `ToastProvider` in `src/app/layout.tsx`. Because the
+layout chrome is unavailable at that point, `global-error.tsx` renders its own
+`<html>`/`<body>` shell as required by the Next.js contract.
+
+Key design decisions:
+
+- **`role="alert"` + `aria-live="assertive"`** on the `<main>` element so
+  screen readers announce the error immediately.
+- **No stack traces in the DOM.** Only `error.message` (user-facing) and
+  `error.digest` (server-generated support-correlation ID) are rendered.
+- **Minimal inline styles** (no Tailwind, no font imports) so the page renders
+  correctly even when the CSS pipeline that powers the normal layout is
+  unavailable.
+- Behaviour is covered by `src/app/global-error.test.tsx`, which asserts the
+  message renders, `reset` is called on click, no stack trace appears, and the
+  component renders standalone without Header/Footer.
 
 ## Accessibility
 
